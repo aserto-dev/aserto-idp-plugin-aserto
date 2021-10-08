@@ -31,6 +31,19 @@ type AsertoConfig struct {
 }
 
 func (c *AsertoConfig) Validate() error {
+
+	if c.Authorizer == "" {
+		return status.Error(codes.InvalidArgument, "no authorizer was provided")
+	}
+
+	if c.ApiKey == "" {
+		return status.Error(codes.InvalidArgument, "no api key was provided")
+	}
+
+	if c.Tenant == "" {
+		return status.Error(codes.InvalidArgument, "no tenant was provided")
+	}
+
 	ctx := context.Background()
 	conn, err := authorizer.Connection(
 		ctx,

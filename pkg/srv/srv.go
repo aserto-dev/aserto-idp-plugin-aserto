@@ -21,7 +21,6 @@ const (
 type AsertoPlugin struct {
 	Config          *AsertoConfig
 	dirClient       dir.DirectoryClient
-	users           chan *api.User
 	ctx             context.Context
 	token           string
 	lastPage        bool

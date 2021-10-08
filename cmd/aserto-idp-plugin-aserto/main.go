@@ -15,6 +15,6 @@ func main() {
 
 	err := plugin.Serve(options)
 	if err != nil {
-		log.Println(err.Error)
+		log.Println(err.Error())
 	}
 }
