@@ -24,10 +24,10 @@ func GetVersion() (string, string, string) {
 }
 
 type AsertoConfig struct {
-	Authorizer string `description:"Aserto authorizer endpoint" kind:"attribute" mode:"normal" readonly:"false"`
-	Tenant     string `description:"Aserto Tenant ID" kind:"attribute" mode:"normal" readonly:"false"`
-	ApiKey     string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false"`
-	IncludeExt bool   `description:"Include user extensions" kind:"attribute" mode:"normal" readonly:"false"`
+	Authorizer string `description:"Aserto authorizer endpoint" kind:"attribute" mode:"normal" readonly:"false" name:"authorizer"`
+	Tenant     string `description:"Aserto Tenant ID" kind:"attribute" mode:"normal" readonly:"false" name:"tenant"`
+	ApiKey     string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false" name:"api_key"`
+	IncludeExt bool   `description:"Include user extensions" kind:"attribute" mode:"normal" readonly:"false" name:"include_ext"`
 }
 
 func (c *AsertoConfig) Validate() error {

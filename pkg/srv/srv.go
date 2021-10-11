@@ -26,6 +26,7 @@ type AsertoPlugin struct {
 	lastPage        bool
 	loadUsersStream dir.Directory_LoadUsersClient
 	sendCount       int32
+	op              plugin.OperationType
 }
 
 func NewAuth0Plugin() *AsertoPlugin {
@@ -38,7 +39,7 @@ func (s *AsertoPlugin) GetConfig() plugin.PluginConfig {
 	return &AsertoConfig{}
 }
 
-func (s *AsertoPlugin) Open(cfg plugin.PluginConfig) error {
+func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationType) error {
 	config, ok := cfg.(*AsertoConfig)
 	if !ok {
 		return errors.New("invalid config")
@@ -61,6 +62,7 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig) error {
 	s.lastPage = false
 	s.loadUsersStream, err = s.dirClient.LoadUsers(s.ctx)
 	s.sendCount = 0
+	s.op = operation
 	if err != nil {
 		return err
 	}
@@ -111,14 +113,31 @@ func (s *AsertoPlugin) Write(user *api.User) error {
 	return nil
 }
 
-func (s *AsertoPlugin) Close() error {
-	res, err := s.loadUsersStream.CloseAndRecv()
-	if err != nil {
-		return errors.Wrapf(err, "stream.CloseAndRecv()")
+func (s *AsertoPlugin) Delete(userId string) error {
+	req := &dir.DeleteUserRequest{
+		Id: userId,
 	}
 
-	if res != nil && res.Received != s.sendCount {
-		return fmt.Errorf("send != received %d - %d", s.sendCount, res.Received)
+	if _, err := s.dirClient.DeleteUser(s.ctx, req); err != nil {
+		return errors.Wrapf(err, "delete %s", userId)
+	}
+
+	return nil
+}
+
+func (s *AsertoPlugin) Close() error {
+	switch s.op {
+	case plugin.OperationTypeWrite:
+		{
+			res, err := s.loadUsersStream.CloseAndRecv()
+			if err != nil {
+				return errors.Wrapf(err, "stream.CloseAndRecv()")
+			}
+
+			if res != nil && res.Received != s.sendCount {
+				return fmt.Errorf("send != received %d - %d", s.sendCount, res.Received)
+			}
+		}
 	}
 
 	return nil
