@@ -5,14 +5,16 @@ import (
 	"io"
 	"log"
 
-	"github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/grpcc"
-	"github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/grpcc/authorizer"
+	aserto "github.com/aserto-dev/aserto-go/client"
+	"github.com/aserto-dev/aserto-go/client/grpc"
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	dir "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+//go:generate mockgen -destination=mock_directory.go -package=srv github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1 DirectoryClient,Directory_LoadUsersClient
 
 const (
 	pageSize = int32(100)
@@ -48,17 +50,17 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 
 	s.ctx = context.Background()
 
-	conn, err := authorizer.Connection(
+	client, err := grpc.New(
 		s.ctx,
-		config.Authorizer,
-		grpcc.NewAPIKeyAuth(config.ApiKey),
+		aserto.WithAddr(config.Authorizer),
+		aserto.WithAPIKeyAuth(config.ApiKey),
+		aserto.WithTenantID(config.Tenant),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create authorizer connection: %s", err)
 	}
 
-	s.ctx = grpcc.SetTenantContext(s.ctx, s.Config.Tenant)
-	s.dirClient = conn.DirectoryClient()
+	s.dirClient = client.Directory
 	s.lastPage = false
 	switch operation {
 	case plugin.OperationTypeWrite, plugin.OperationTypeDelete:
@@ -85,7 +87,7 @@ func (s *AsertoPlugin) Read() ([]*api.User, error) {
 			Size:  pageSize,
 			Token: s.token,
 		},
-		Base: !s.Config.IncludeExt,
+		Base: false,
 	})
 	if err != nil {
 		return nil, err
@@ -101,10 +103,6 @@ func (s *AsertoPlugin) Read() ([]*api.User, error) {
 }
 
 func (s *AsertoPlugin) Write(user *api.User) error {
-	if !s.Config.IncludeExt {
-		user.Attributes = &api.AttrSet{}
-		user.Applications = make(map[string]*api.AttrSet)
-	}
 
 	req := &dir.LoadUsersRequest{
 		Data: &dir.LoadUsersRequest_User{
