@@ -10,7 +10,7 @@ import (
 func main() {
 
 	options := &plugin.PluginOptions{
-		PluginHandler: &srv.AsertoPlugin{},
+		PluginHandler: srv.NewAsertoPlugin(),
 	}
 
 	err := plugin.Serve(options)
