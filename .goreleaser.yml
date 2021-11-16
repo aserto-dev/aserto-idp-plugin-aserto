@@ -51,6 +51,11 @@ changelog:
       - "^docs:"
       - "^test:"
 
+blobs:
+  - provider: gs
+    bucket: aserto-idp-cli
+    folder: "plugins/aserto-idp-plugin-aserto/{{ .Major }}/{{ .Version }}"
+
 release:
   github:
     owner: aserto-dev
