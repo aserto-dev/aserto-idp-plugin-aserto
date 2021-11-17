@@ -24,7 +24,6 @@ builds:
       - -X pkg/config.commit={{.ShortCommit}}
       - -X pkg/config.date={{.Date}}
     mod_timestamp: "{{ .CommitTimestamp }}"
-    no_unique_dist_dir: true
 
 archives:
   - format: zip
