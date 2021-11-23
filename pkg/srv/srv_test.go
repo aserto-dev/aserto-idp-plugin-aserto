@@ -171,8 +171,9 @@ func TestClose(t *testing.T) {
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(&directory.LoadUsersResponse{Received: 1}, nil)
 
-	err := p.Close()
+	res, err := p.Close()
 	assert.Nil(err)
+	assert.Equal(int32(1), res.Received)
 }
 
 func TestCloseWithStreamClose(t *testing.T) {
@@ -183,22 +184,10 @@ func TestCloseWithStreamClose(t *testing.T) {
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(nil, errors.New("BOOM!"))
 
-	err := p.Close()
+	res, err := p.Close()
 	assert.NotNil(err)
+	assert.Nil(res)
 	assert.Equal("rpc error: code = Internal desc = stream close: BOOM!", err.Error(), "should return error")
-}
-
-func TestCloseFail(t *testing.T) {
-	assert := require.New(t)
-	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
-	p.lastPage = false
-	p.sendCount = 2
-
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(&directory.LoadUsersResponse{Received: 1}, nil)
-	err := p.Close()
-
-	assert.NotNil(err)
-	assert.Equal("rpc error: code = Internal desc = send != received 2 - 1", err.Error(), "should return error")
 }
 
 func TestDeleteFail(t *testing.T) {
