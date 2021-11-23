@@ -156,20 +156,26 @@ func (s *AsertoPlugin) Delete(userId string) error {
 	return nil
 }
 
-func (s *AsertoPlugin) Close() error {
+func (s *AsertoPlugin) Close() (*plugin.Stats, error) {
 	switch s.op {
 	case plugin.OperationTypeWrite, plugin.OperationTypeDelete:
 		{
 			res, err := s.loadUsersStream.CloseAndRecv()
 			if err != nil {
-				return status.Errorf(codes.Internal, "stream close: %s", err.Error())
+				return nil, status.Errorf(codes.Internal, "stream close: %s", err.Error())
 			}
 
-			if res != nil && res.Received != s.sendCount {
-				return status.Errorf(codes.Internal, "send != received %d - %d", s.sendCount, res.Received)
+			if res != nil {
+				return &plugin.Stats{
+					Received: res.Received,
+					Created:  res.Created,
+					Updated:  res.Updated,
+					Deleted:  res.Deleted,
+					Errors:   res.Errors,
+				}, nil
 			}
 		}
 	}
 
-	return nil
+	return nil, nil
 }
