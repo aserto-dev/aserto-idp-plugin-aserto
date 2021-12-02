@@ -35,7 +35,7 @@ func CreateTestApiUser(id, displayName, email, mobilePhone string) *api.User {
 		Identities:  make(map[string]*api.IdentitySource),
 		Attributes: &api.AttrSet{
 			Properties:  &structpb.Struct{Fields: make(map[string]*structpb.Value)},
-			Roles:       []string{},
+			Roles:       []string{"User"},
 			Permissions: []string{},
 		},
 		Applications: make(map[string]*api.AttrSet),
@@ -136,6 +136,7 @@ func TestWriteFail(t *testing.T) {
 	assert := require.New(t)
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
+	p.splitExtensions = false
 	p.sendCount = 0
 	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
 
@@ -152,10 +153,27 @@ func TestWrite(t *testing.T) {
 	assert := require.New(t)
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
+	p.splitExtensions = false
 	p.sendCount = 0
 	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
+
+	err := p.Write(user)
+
+	assert.Nil(err)
+	assert.Equal(int32(1), p.sendCount)
+}
+
+func TestWriteSplitExt(t *testing.T) {
+	assert := require.New(t)
+	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
+	p.lastPage = false
+	p.splitExtensions = true
+	p.sendCount = 0
+	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
+
+	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 
 	err := p.Write(user)
 

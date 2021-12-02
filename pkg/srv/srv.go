@@ -12,6 +12,7 @@ import (
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 //go:generate mockgen -destination=mock_directory.go -package=srv github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1 DirectoryClient,Directory_LoadUsersClient
@@ -29,6 +30,7 @@ type AsertoPlugin struct {
 	loadUsersStream dir.Directory_LoadUsersClient
 	sendCount       int32
 	op              plugin.OperationType
+	splitExtensions bool
 }
 
 func NewAuth0Plugin() *AsertoPlugin {
@@ -74,6 +76,7 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 
 	s.sendCount = 0
 	s.op = operation
+	s.splitExtensions = config.SplitExtensions
 
 	return nil
 }
@@ -104,6 +107,29 @@ func (s *AsertoPlugin) Read() ([]*api.User, error) {
 
 func (s *AsertoPlugin) Write(user *api.User) error {
 
+	var reqExt *dir.LoadUsersRequest
+	if s.splitExtensions {
+		clonedAttributes := proto.Clone(user.Attributes)
+		user.Attributes = &api.AttrSet{}
+
+		clonedApplications := make(map[string]*api.AttrSet)
+		for k, v := range user.Applications {
+			cloneAttrSet := proto.Clone(v)
+			clonedApplications[k] = cloneAttrSet.(*api.AttrSet)
+		}
+		user.Applications = make(map[string]*api.AttrSet)
+
+		reqExt = &dir.LoadUsersRequest{
+			Data: &dir.LoadUsersRequest_UserExt{
+				UserExt: &api.UserExt{
+					Id:           user.GetId(),
+					Attributes:   clonedAttributes.(*api.AttrSet),
+					Applications: clonedApplications,
+				},
+			},
+		}
+	}
+
 	req := &dir.LoadUsersRequest{
 		Data: &dir.LoadUsersRequest_User{
 			User: user,
@@ -113,6 +139,13 @@ func (s *AsertoPlugin) Write(user *api.User) error {
 	if err := s.loadUsersStream.Send(req); err != nil {
 		return status.Errorf(codes.Internal, "stream send: %s", err.Error())
 	}
+
+	if reqExt != nil {
+		if err := s.loadUsersStream.Send(reqExt); err != nil {
+			return status.Errorf(codes.Internal, "stream send extension: %s", err.Error())
+		}
+	}
+
 	s.sendCount++
 
 	return nil
