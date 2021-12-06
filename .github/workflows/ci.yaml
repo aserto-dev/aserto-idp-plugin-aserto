@@ -86,6 +86,8 @@ jobs:
           secrets: |
             kv/data/github  "SSH_PRIVATE_KEY"                         | SSH_PRIVATE_KEY;
             kv/data/github  "READ_WRITE_TOKEN"                        | READ_WRITE_TOKEN;
+            kv/data/github  "USERNAME"                                | DOCKER_USERNAME;
+            kv/data/github  "DOCKER_PUSH_TOKEN"                       | DOCKER_PASSWORD;
             kv/data/gcp     "SERVICE_ACCOUNT_GITHUB_ACTIONS_RELEASE"  | SERVICE_ACCOUNT_GITHUB_ACTIONS_RELEASE;
       - name: Install Vault CLI
         uses: innovationnorway/setup-vault@v1.0.3
@@ -113,6 +115,8 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ steps.vault.outputs.READ_WRITE_TOKEN }}
+          DOKER_USERNAME: ${{ steps.vault.outputs.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ steps.vault.outputs.DOCKER_PASSWORD }}
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gs.json
         run: |
           mkdir -p $HOME/.ssh
@@ -124,4 +128,4 @@ jobs:
 
           echo "${SERVICE_ACCOUNT_GITHUB_ACTIONS_RELEASE}" > /tmp/gs.json
 
-          go run mage.go deps release
+          go run mage.go deps release publish
