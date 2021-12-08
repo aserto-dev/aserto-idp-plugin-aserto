@@ -115,7 +115,7 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ steps.vault.outputs.READ_WRITE_TOKEN }}
-          DOKER_USERNAME: ${{ steps.vault.outputs.DOCKER_USERNAME }}
+          DOCKER_USERNAME: ${{ steps.vault.outputs.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ steps.vault.outputs.DOCKER_PASSWORD }}
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gs.json
         run: |

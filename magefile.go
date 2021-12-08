@@ -27,9 +27,8 @@ func init() {
 var (
 	oras         = deps.BinDep("oras")
 	mediaType    = ":application/vnd.unknown.layer.v1+txt"
-	pluginName   = "aserto-idp-plugin-aserto_"
-	execLocation = filepath.Join("dist", pluginName)
-	ghName       = "ghcr.io/aserto-dev/" + pluginName
+	execLocation = filepath.Join("dist", "aserto-idp-plugin-aserto_")
+	ghName       = "ghcr.io/aserto-dev/aserto-idp-plugins_"
 	osMap        = map[string][]string{
 		"linux":   {"arm64", "amd64"},
 		"darwin":  {"arm64", "amd64"},
@@ -115,7 +114,7 @@ func Publish() error {
 
 	for os, archs := range osMap {
 		for _, arch := range archs {
-			grName := fmt.Sprintf("%s%s_%s:%s", ghName, os, arch, version)
+			grName := fmt.Sprintf("%s%s_%s:%s-%s", ghName, os, arch, "aserto", version)
 			location := fmt.Sprintf("%s%s_%s%s", execLocation, os, arch, mediaType)
 			err = oras("push", "-u", username, "-p", password, grName, location)
 			if err != nil {
