@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/aserto-dev/aserto-go v0.0.5
 	github.com/aserto-dev/go-grpc v0.0.26
-	github.com/aserto-dev/idp-plugin-sdk v0.0.4
+	github.com/aserto-dev/idp-plugin-sdk v0.0.5
 	github.com/aserto-dev/mage-loot v0.4.16
 	github.com/aserto-dev/sver v1.3.9
 	github.com/golang/mock v1.6.0

@@ -43,6 +43,10 @@ func (s *AsertoPlugin) GetConfig() plugin.PluginConfig {
 	return &AsertoConfig{}
 }
 
+func (s *AsertoPlugin) GetVersion() (string, string, string) {
+	return GetVersion()
+}
+
 func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationType) error {
 	config, ok := cfg.(*AsertoConfig)
 	if !ok {
