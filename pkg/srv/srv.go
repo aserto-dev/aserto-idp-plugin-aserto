@@ -10,8 +10,11 @@ import (
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	dir "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
+	"github.com/google/uuid"
+	"github.com/tidwall/gjson"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -156,17 +159,48 @@ func (s *AsertoPlugin) Write(user *api.User) error {
 }
 
 func (s *AsertoPlugin) Delete(userId string) error {
-	req := &dir.GetUserRequest{
-		Id: userId,
+	var deleteUsers []*api.User
+	if isValidUUID(userId) {
+		req := &dir.GetUserRequest{
+			Id: userId,
+		}
+
+		resp, err := s.dirClient.GetUser(s.ctx, req)
+		if err != nil {
+			return status.Errorf(codes.Internal, "get user: %s", err.Error())
+		}
+
+		user := resp.GetResult()
+		if user == nil {
+			return status.Errorf(codes.NotFound, "user %s not found", userId)
+		}
+
+		deleteUsers = append(deleteUsers, user)
+	} else {
+		var allUsers []*api.User
+		for {
+			u, err := s.Read()
+			if err == io.EOF {
+				break
+			}
+			allUsers = append(allUsers, u...)
+		}
+
+		for _, u := range allUsers {
+			userJson, err := protojson.Marshal(u)
+			if err != nil {
+				return status.Errorf(codes.Internal, "unmarshal user: %s", err.Error())
+			}
+			userStr := string(userJson)
+			result := gjson.Get("["+userStr+"]", userId)
+
+			if result.Exists() {
+				deleteUsers = append(deleteUsers, u)
+			}
+		}
 	}
 
-	resp, err := s.dirClient.GetUser(s.ctx, req)
-	if err != nil {
-		return status.Errorf(codes.Internal, "get user: %s", err.Error())
-	}
-
-	user := resp.GetResult()
-	if user != nil {
+	for _, user := range deleteUsers {
 		user.Deleted = true
 		req := &dir.LoadUsersRequest{
 			Data: &dir.LoadUsersRequest_User{
@@ -178,8 +212,6 @@ func (s *AsertoPlugin) Delete(userId string) error {
 			return status.Errorf(codes.Internal, "stream send: %s", err.Error())
 		}
 		s.sendCount++
-	} else {
-		return status.Errorf(codes.NotFound, "user %s not found", userId)
 	}
 
 	// req := &dir.DeleteUserRequest{
@@ -215,4 +247,9 @@ func (s *AsertoPlugin) Close() (*plugin.Stats, error) {
 	}
 
 	return nil, nil
+}
+
+func isValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }

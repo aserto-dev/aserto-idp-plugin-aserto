@@ -9,9 +9,11 @@ require (
 	github.com/aserto-dev/mage-loot v0.4.16
 	github.com/aserto-dev/sver v1.3.9
 	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.2.0
 	github.com/google/wire v0.5.0
 	github.com/magefile/mage v1.11.0
 	github.com/stretchr/testify v1.7.0
+	github.com/tidwall/gjson v1.12.0
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 )
@@ -51,6 +53,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20211111160137-58aab5ef257a // indirect

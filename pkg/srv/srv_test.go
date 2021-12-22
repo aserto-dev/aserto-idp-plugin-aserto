@@ -26,7 +26,7 @@ func CreateListResp(token string, users []*api.User) *directory.ListUsersRespons
 
 }
 
-func CreateTestApiUser(id, displayName, email, mobilePhone string) *api.User {
+func CreateTestApiUser(id, displayName, email, mobilePhone, connectionId string) *api.User {
 	user := api.User{
 		Id:          id,
 		DisplayName: displayName,
@@ -40,8 +40,9 @@ func CreateTestApiUser(id, displayName, email, mobilePhone string) *api.User {
 		},
 		Applications: make(map[string]*api.AttrSet),
 		Metadata: &api.Metadata{
-			CreatedAt: timestamppb.New(time.Now()),
-			UpdatedAt: timestamppb.New(time.Now()),
+			CreatedAt:    timestamppb.New(time.Now()),
+			UpdatedAt:    timestamppb.New(time.Now()),
+			ConnectionId: &connectionId,
 		},
 	}
 
@@ -88,7 +89,7 @@ func TestReadOnePage(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834"))
+	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
 		CreateListResp("", users), nil)
@@ -112,7 +113,7 @@ func TestReadMultiplePages(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834"))
+	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 
@@ -121,7 +122,7 @@ func TestReadMultiplePages(t *testing.T) {
 	assert.Nil(err)
 
 	users = nil
-	users = append(users, CreateTestApiUser("2", "First2 Last2", "test@unit.com", "0998976834"))
+	users = append(users, CreateTestApiUser("2", "First2 Last2", "test@unit.com", "0998976834", "connectionId"))
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 	users2, err := p.Read()
 
@@ -138,7 +139,7 @@ func TestWriteFail(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
+	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("BOOM!"))
 
@@ -155,7 +156,7 @@ func TestWrite(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
+	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 
@@ -171,7 +172,7 @@ func TestWriteSplitExt(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = true
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
+	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 
@@ -217,7 +218,7 @@ func TestDeleteFail(t *testing.T) {
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		nil, errors.New("BOOM!"))
 
-	err := p.Delete("id")
+	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
 	assert.Equal("rpc error: code = Internal desc = get user: BOOM!", err.Error())
 }
@@ -231,9 +232,9 @@ func TestDeleteWithInexistingUser(t *testing.T) {
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: nil}, nil)
 
-	err := p.Delete("id")
+	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
-	assert.Equal("rpc error: code = NotFound desc = user id not found", err.Error())
+	assert.Equal("rpc error: code = NotFound desc = user bd397e35-6333-11ec-b5cf-02a489f227f9 not found", err.Error())
 }
 
 func TestDelete(t *testing.T) {
@@ -241,13 +242,13 @@ func TestDelete(t *testing.T) {
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
+	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 
-	err := p.Delete("1")
+	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.Nil(err)
 }
 
@@ -256,13 +257,31 @@ func TestDeleteStreamFail(t *testing.T) {
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834")
+	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("BOOM!"))
 
-	err := p.Delete("1")
+	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
 	assert.Equal("rpc error: code = Internal desc = stream send: BOOM!", err.Error())
+}
+
+func TestDeleteWithQuery(t *testing.T) {
+	assert := require.New(t)
+	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
+	p.lastPage = false
+	p.sendCount = 0
+	var users []*api.User
+
+	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+
+	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
+	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
+		CreateListResp("", users), nil)
+
+	err := p.Delete("#(metadata.connectionId==\"connectionId\")")
+	assert.Nil(err)
+	assert.Equal(int32(1), p.sendCount)
 }

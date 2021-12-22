@@ -73,7 +73,7 @@ func Release() error {
 // BuildAll builds all binaries in ./cmd for
 // all configured operating systems and architectures.
 func BuildAll() error {
-	return common.BuildAll()
+	return common.BuildAllReleaser("--snapshot")
 }
 
 func Deps() {
