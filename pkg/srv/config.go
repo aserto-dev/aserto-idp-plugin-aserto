@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/aserto-go/client/grpc"
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	dir "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
+	"github.com/aserto-dev/idp-plugin-sdk/plugin"
 )
 
 // values set by linker using ldflag -X
@@ -30,7 +31,7 @@ type AsertoConfig struct {
 	SplitExtensions bool   `description:"Split user and extensions" kind:"attribute" mode:"normal" readonly:"false" name:"split_extensions"`
 }
 
-func (c *AsertoConfig) Validate() error {
+func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
 
 	if c.Authorizer == "" {
 		return status.Error(codes.InvalidArgument, "no authorizer was provided")
