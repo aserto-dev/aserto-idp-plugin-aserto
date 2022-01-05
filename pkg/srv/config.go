@@ -29,6 +29,7 @@ type AsertoConfig struct {
 	Tenant          string `description:"Aserto Tenant ID" kind:"attribute" mode:"normal" readonly:"false" name:"tenant"`
 	ApiKey          string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false" name:"api_key"`
 	SplitExtensions bool   `description:"Split user and extensions" kind:"attribute" mode:"normal" readonly:"false" name:"split_extensions"`
+	Insecure        bool   `description:"Disable TLS verification if true" kind:"attribute" mode:"normal" readonly:"false" name:"insecure"`
 }
 
 func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
@@ -46,12 +47,25 @@ func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
 	}
 
 	ctx := context.Background()
-	client, err := grpc.New(
-		ctx,
-		aserto.WithAddr(c.Authorizer),
-		aserto.WithAPIKeyAuth(c.ApiKey),
-		aserto.WithTenantID(c.Tenant),
-	)
+	var client *grpc.Client
+	var err error
+	if c.Insecure {
+		client, err = grpc.New(
+			ctx,
+			aserto.WithAddr(c.Authorizer),
+			aserto.WithAPIKeyAuth(c.ApiKey),
+			aserto.WithTenantID(c.Tenant),
+			aserto.WithInsecure(),
+		)
+
+	} else {
+		client, err = grpc.New(
+			ctx,
+			aserto.WithAddr(c.Authorizer),
+			aserto.WithAPIKeyAuth(c.ApiKey),
+			aserto.WithTenantID(c.Tenant),
+		)
+	}
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to create authorizar connection %s", err.Error())
 	}
