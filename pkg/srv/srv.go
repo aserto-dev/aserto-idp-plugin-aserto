@@ -59,12 +59,26 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 
 	s.ctx = context.Background()
 
-	client, err := grpc.New(
-		s.ctx,
-		aserto.WithAddr(config.Authorizer),
-		aserto.WithAPIKeyAuth(config.ApiKey),
-		aserto.WithTenantID(config.Tenant),
-	)
+	var client *grpc.Client
+	var err error
+	if config.Insecure {
+		client, err = grpc.New(
+			s.ctx,
+			aserto.WithAddr(config.Authorizer),
+			aserto.WithAPIKeyAuth(config.ApiKey),
+			aserto.WithTenantID(config.Tenant),
+			aserto.WithInsecure(),
+		)
+
+	} else {
+		client, err = grpc.New(
+			s.ctx,
+			aserto.WithAddr(config.Authorizer),
+			aserto.WithAPIKeyAuth(config.ApiKey),
+			aserto.WithTenantID(config.Tenant),
+		)
+	}
+
 	if err != nil {
 		log.Fatalf("Failed to create authorizer connection: %s", err)
 	}
