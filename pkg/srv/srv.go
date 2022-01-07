@@ -140,10 +140,23 @@ func (s *AsertoPlugin) Write(user *api.User) error {
 		}
 		user.Applications = make(map[string]*api.AttrSet)
 
+		var pid string
+
+		for key, value := range user.Identities {
+			if value.Kind == api.IdentityKind_IDENTITY_KIND_PID {
+				pid = key
+				break
+			}
+		}
+
+		if pid == "" {
+			return status.Errorf(codes.Internal, "couldn't find PID identity for user: %s", user.DisplayName)
+		}
+
 		reqExt = &dir.LoadUsersRequest{
 			Data: &dir.LoadUsersRequest_UserExt{
 				UserExt: &api.UserExt{
-					Id:           user.GetId(),
+					Id:           pid,
 					Attributes:   clonedAttributes.(*api.AttrSet),
 					Applications: clonedApplications,
 				},
