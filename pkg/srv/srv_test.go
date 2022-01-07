@@ -26,7 +26,7 @@ func CreateListResp(token string, users []*api.User) *directory.ListUsersRespons
 
 }
 
-func CreateTestApiUser(id, displayName, email, mobilePhone, connectionId string) *api.User {
+func CreateTestApiUser(id, pid, displayName, email, mobilePhone, connectionId string) *api.User {
 	user := api.User{
 		Id:          id,
 		DisplayName: displayName,
@@ -48,6 +48,12 @@ func CreateTestApiUser(id, displayName, email, mobilePhone, connectionId string)
 
 	user.Identities[mobilePhone] = &api.IdentitySource{
 		Kind:     api.IdentityKind_IDENTITY_KIND_PHONE,
+		Provider: "auth0",
+		Verified: true,
+	}
+
+	user.Identities[pid] = &api.IdentitySource{
+		Kind:     api.IdentityKind_IDENTITY_KIND_PID,
 		Provider: "auth0",
 		Verified: true,
 	}
@@ -89,7 +95,7 @@ func TestReadOnePage(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
 		CreateListResp("", users), nil)
@@ -113,7 +119,7 @@ func TestReadMultiplePages(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 
@@ -122,7 +128,7 @@ func TestReadMultiplePages(t *testing.T) {
 	assert.Nil(err)
 
 	users = nil
-	users = append(users, CreateTestApiUser("2", "First2 Last2", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestApiUser("2", "2", "First2 Last2", "test@unit.com", "0998976834", "connectionId"))
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 	users2, err := p.Read()
 
@@ -139,7 +145,7 @@ func TestWriteFail(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("BOOM!"))
 
@@ -156,7 +162,7 @@ func TestWrite(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 
@@ -172,7 +178,7 @@ func TestWriteSplitExt(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = true
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 
@@ -180,6 +186,23 @@ func TestWriteSplitExt(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Equal(int32(1), p.sendCount)
+}
+
+func TestWriteSplitExtFail(t *testing.T) {
+	assert := require.New(t)
+	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
+	p.lastPage = false
+	p.splitExtensions = true
+	p.sendCount = 0
+	user := CreateTestApiUser("1", "", "First Last", "test@unit.com", "0998976834", "connectionId")
+
+	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(0).Return(nil)
+
+	err := p.Write(user)
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "couldn't find PID identity for user: First Last")
+	assert.Equal(int32(0), p.sendCount)
 }
 
 func TestClose(t *testing.T) {
@@ -242,7 +265,7 @@ func TestDelete(t *testing.T) {
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
 	p.sendCount = 0
-	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
@@ -257,7 +280,7 @@ func TestDeleteStreamFail(t *testing.T) {
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
 	p.sendCount = 0
-	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
@@ -275,7 +298,7 @@ func TestDeleteWithQuery(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
