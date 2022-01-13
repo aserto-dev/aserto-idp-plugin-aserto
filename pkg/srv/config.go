@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	aserto "github.com/aserto-dev/aserto-go/client"
-	"github.com/aserto-dev/aserto-go/client/grpc"
+	"github.com/aserto-dev/aserto-go/client/authorizer"
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	dir "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
@@ -38,7 +38,7 @@ func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
 		return status.Error(codes.InvalidArgument, "no authorizer was provided")
 	}
 
-	if c.ApiKey == "" {
+	if c.ApiKey == "" && !c.Insecure {
 		return status.Error(codes.InvalidArgument, "no api key was provided")
 	}
 
@@ -47,27 +47,27 @@ func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
 	}
 
 	ctx := context.Background()
-	var client *grpc.Client
+	var client *authorizer.Client
 	var err error
+
 	if c.Insecure {
-		client, err = grpc.New(
+		client, err = authorizer.New(
 			ctx,
 			aserto.WithAddr(c.Authorizer),
-			aserto.WithAPIKeyAuth(c.ApiKey),
 			aserto.WithTenantID(c.Tenant),
-			aserto.WithInsecure(),
+			aserto.WithInsecure(c.Insecure),
 		)
-
 	} else {
-		client, err = grpc.New(
+		client, err = authorizer.New(
 			ctx,
 			aserto.WithAddr(c.Authorizer),
 			aserto.WithAPIKeyAuth(c.ApiKey),
 			aserto.WithTenantID(c.Tenant),
 		)
 	}
+
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to create authorizar connection %s", err.Error())
+		return status.Errorf(codes.Internal, "failed to create authorizer connection %s", err.Error())
 	}
 
 	_, err = client.Directory.ListUsers(ctx, &dir.ListUsersRequest{
