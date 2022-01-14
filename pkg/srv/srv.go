@@ -6,7 +6,7 @@ import (
 	"log"
 
 	aserto "github.com/aserto-dev/aserto-go/client"
-	"github.com/aserto-dev/aserto-go/client/grpc"
+	"github.com/aserto-dev/aserto-go/client/authorizer"
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	dir "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
@@ -59,19 +59,17 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 
 	s.ctx = context.Background()
 
-	var client *grpc.Client
+	var client *authorizer.Client
 	var err error
 	if config.Insecure {
-		client, err = grpc.New(
+		client, err = authorizer.New(
 			s.ctx,
 			aserto.WithAddr(config.Authorizer),
-			aserto.WithAPIKeyAuth(config.ApiKey),
 			aserto.WithTenantID(config.Tenant),
-			aserto.WithInsecure(),
+			aserto.WithInsecure(config.Insecure),
 		)
-
 	} else {
-		client, err = grpc.New(
+		client, err = authorizer.New(
 			s.ctx,
 			aserto.WithAddr(config.Authorizer),
 			aserto.WithAPIKeyAuth(config.ApiKey),

@@ -59,7 +59,7 @@ func TestValidateWithInvalidCredentials(t *testing.T) {
 	err := config.Validate(plugin.OperationTypeRead)
 
 	assert.NotNil(t, err)
-	assert.Equal("rpc error: code = Internal desc = failed to create authorizar connection create grpc client failed: context deadline exceeded", err.Error())
+	assert.Equal("rpc error: code = Internal desc = failed to create authorizer connection create grpc client failed: context deadline exceeded", err.Error())
 }
 
 func TestDecription(t *testing.T) {
