@@ -27,8 +27,8 @@ func GetVersion() (string, string, string) {
 type AsertoConfig struct {
 	Authorizer      string `description:"Aserto authorizer endpoint" kind:"attribute" mode:"normal" readonly:"false" name:"authorizer"`
 	Tenant          string `description:"Aserto Tenant ID" kind:"attribute" mode:"normal" readonly:"false" name:"tenant"`
-	ApiKey          string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false" name:"api_key"`
-	SplitExtensions bool   `description:"Split user and extensions" kind:"attribute" mode:"normal" readonly:"false" name:"split_extensions"`
+	ApiKey          string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false" name:"api-key"`
+	SplitExtensions bool   `description:"Split user and extensions" kind:"attribute" mode:"normal" readonly:"false" name:"split-extensions"`
 	Insecure        bool   `description:"Disable TLS verification if true" kind:"attribute" mode:"normal" readonly:"false" name:"insecure"`
 }
 
