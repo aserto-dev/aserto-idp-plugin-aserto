@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"time"
 
 	aserto "github.com/aserto-dev/aserto-go/client"
 	"github.com/aserto-dev/aserto-go/client/authorizer"
@@ -16,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //go:generate mockgen -destination=mock_directory.go -package=srv github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1 DirectoryClient,Directory_LoadUsersClient
@@ -227,6 +229,7 @@ func (s *AsertoPlugin) Delete(userId string) error {
 
 	for _, user := range deleteUsers {
 		user.Deleted = true
+		user.Metadata.DeletedAt = timestamppb.New(time.Now())
 		req := &dir.LoadUsersRequest{
 			Data: &dir.LoadUsersRequest_User{
 				User: user,
