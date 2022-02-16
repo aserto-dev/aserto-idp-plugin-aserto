@@ -6,14 +6,14 @@ require (
 	github.com/aserto-dev/aserto-go v0.8.0
 	github.com/aserto-dev/go-grpc v0.8.0
 	github.com/aserto-dev/idp-plugin-sdk v0.8.0
-	github.com/aserto-dev/mage-loot v0.8.0
+	github.com/aserto-dev/mage-loot v0.8.1
 	github.com/aserto-dev/sver v1.3.9
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.2.0
 	github.com/google/wire v0.5.0
 	github.com/magefile/mage v1.12.1
 	github.com/stretchr/testify v1.7.0
-	github.com/tidwall/gjson v1.12.1
+	github.com/tidwall/gjson v1.14.0
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 )
