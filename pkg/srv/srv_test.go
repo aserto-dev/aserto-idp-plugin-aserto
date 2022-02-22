@@ -243,7 +243,7 @@ func TestDeleteFail(t *testing.T) {
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
-	assert.Equal("rpc error: code = Internal desc = get user: ##", err.Error())
+	assert.Equal("rpc error: code = Internal desc = get user: #boom#", err.Error())
 }
 
 func TestDeleteWithInexistingUser(t *testing.T) {
