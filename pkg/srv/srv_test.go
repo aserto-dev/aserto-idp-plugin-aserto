@@ -26,7 +26,7 @@ func CreateListResp(token string, users []*api.User) *directory.ListUsersRespons
 
 }
 
-func CreateTestApiUser(id, pid, displayName, email, mobilePhone, connectionId string) *api.User {
+func CreateTestAPIUser(id, pid, displayName, email, mobilePhone, connectionID string) *api.User {
 	user := api.User{
 		Id:          id,
 		DisplayName: displayName,
@@ -42,7 +42,7 @@ func CreateTestApiUser(id, pid, displayName, email, mobilePhone, connectionId st
 		Metadata: &api.Metadata{
 			CreatedAt:    timestamppb.New(time.Now()),
 			UpdatedAt:    timestamppb.New(time.Now()),
-			ConnectionId: &connectionId,
+			ConnectionId: &connectionID,
 		},
 	}
 
@@ -79,12 +79,12 @@ func TestReadFailToRetriveUsers(t *testing.T) {
 	p.sendCount = 0
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
-		nil, errors.New("BOOM!"))
+		nil, errors.New("#boom#"))
 
 	users, err := p.Read()
 
 	assert.NotNil(err)
-	assert.Equal("BOOM!", err.Error(), "should return error")
+	assert.Equal("#boom#", err.Error(), "should return error")
 	assert.Nil(users)
 }
 
@@ -95,7 +95,7 @@ func TestReadOnePage(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
 		CreateListResp("", users), nil)
@@ -119,7 +119,7 @@ func TestReadMultiplePages(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 
@@ -128,7 +128,7 @@ func TestReadMultiplePages(t *testing.T) {
 	assert.Nil(err)
 
 	users = nil
-	users = append(users, CreateTestApiUser("2", "2", "First2 Last2", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestAPIUser("2", "2", "First2 Last2", "test@unit.com", "0998976834", "connectionId"))
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 	users2, err := p.Read()
 
@@ -145,14 +145,14 @@ func TestWriteFail(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("BOOM!"))
+	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("#boom#"))
 
 	err := p.Write(user)
 
 	assert.NotNil(err)
-	assert.Equal("rpc error: code = Internal desc = stream send: BOOM!", err.Error(), "should return error")
+	assert.Equal("rpc error: code = Internal desc = stream send: #boom#", err.Error(), "should return error")
 	assert.Equal(int32(0), p.sendCount)
 }
 
@@ -162,7 +162,7 @@ func TestWrite(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = false
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 
@@ -178,7 +178,7 @@ func TestWriteSplitExt(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = true
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 
@@ -194,7 +194,7 @@ func TestWriteSplitExtFail(t *testing.T) {
 	p.lastPage = false
 	p.splitExtensions = true
 	p.sendCount = 0
-	user := CreateTestApiUser("1", "", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestAPIUser("1", "", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(0).Return(nil)
 
@@ -224,12 +224,12 @@ func TestCloseWithStreamClose(t *testing.T) {
 	p.lastPage = false
 	p.sendCount = 0
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(nil, errors.New("BOOM!"))
+	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(nil, errors.New("#boom#"))
 
 	res, err := p.Close()
 	assert.NotNil(err)
 	assert.Nil(res)
-	assert.Equal("rpc error: code = Internal desc = stream close: BOOM!", err.Error(), "should return error")
+	assert.Equal("rpc error: code = Internal desc = stream close: #boom#", err.Error(), "should return error")
 }
 
 func TestDeleteFail(t *testing.T) {
@@ -239,11 +239,11 @@ func TestDeleteFail(t *testing.T) {
 	p.sendCount = 0
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
-		nil, errors.New("BOOM!"))
+		nil, errors.New("#boom#"))
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
-	assert.Equal("rpc error: code = Internal desc = get user: BOOM!", err.Error())
+	assert.Equal("rpc error: code = Internal desc = get user: #boom#", err.Error())
 }
 
 func TestDeleteWithInexistingUser(t *testing.T) {
@@ -265,7 +265,7 @@ func TestDelete(t *testing.T) {
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
 	p.sendCount = 0
-	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestAPIUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
@@ -280,15 +280,15 @@ func TestDeleteStreamFail(t *testing.T) {
 	p := NewTestAsertoPlugin(gomock.NewController(t), plugin.OperationTypeWrite)
 	p.lastPage = false
 	p.sendCount = 0
-	user := CreateTestApiUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
+	user := CreateTestAPIUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
 	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("BOOM!"))
+	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("#boom#"))
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
-	assert.Equal("rpc error: code = Internal desc = stream send: BOOM!", err.Error())
+	assert.Equal("rpc error: code = Internal desc = stream send: #boom#", err.Error())
 }
 
 func TestDeleteWithQuery(t *testing.T) {
@@ -298,7 +298,7 @@ func TestDeleteWithQuery(t *testing.T) {
 	p.sendCount = 0
 	var users []*api.User
 
-	users = append(users, CreateTestApiUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
+	users = append(users, CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
 	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(

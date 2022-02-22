@@ -27,7 +27,7 @@ func GetVersion() (string, string, string) {
 type AsertoConfig struct {
 	Authorizer      string `description:"Aserto authorizer endpoint" kind:"attribute" mode:"normal" readonly:"false" name:"authorizer"`
 	Tenant          string `description:"Aserto Tenant ID" kind:"attribute" mode:"normal" readonly:"false" name:"tenant"`
-	ApiKey          string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false" name:"api-key"`
+	APIKey          string `description:"Aserto API Key" kind:"attribute" mode:"normal" readonly:"false" name:"api-key"`
 	SplitExtensions bool   `description:"Split user and extensions" kind:"attribute" mode:"normal" readonly:"false" name:"split-extensions"`
 	Insecure        bool   `description:"Disable TLS verification if true" kind:"attribute" mode:"normal" readonly:"false" name:"insecure"`
 }
@@ -38,7 +38,7 @@ func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
 		return status.Error(codes.InvalidArgument, "no authorizer was provided")
 	}
 
-	if c.ApiKey == "" && !c.Insecure {
+	if c.APIKey == "" && !c.Insecure {
 		return status.Error(codes.InvalidArgument, "no api key was provided")
 	}
 
@@ -61,7 +61,7 @@ func (c *AsertoConfig) Validate(operation plugin.OperationType) error {
 		client, err = authorizer.New(
 			ctx,
 			aserto.WithAddr(c.Authorizer),
-			aserto.WithAPIKeyAuth(c.ApiKey),
+			aserto.WithAPIKeyAuth(c.APIKey),
 			aserto.WithTenantID(c.Tenant),
 		)
 	}
