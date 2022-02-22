@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/mocks"
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	directory "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
@@ -78,7 +79,7 @@ func TestReadFailToRetriveUsers(t *testing.T) {
 	p.lastPage = false
 	p.sendCount = 0
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
 		nil, errors.New("#boom#"))
 
 	users, err := p.Read()
@@ -97,7 +98,7 @@ func TestReadOnePage(t *testing.T) {
 
 	users = append(users, CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
 		CreateListResp("", users), nil)
 
 	users, err := p.Read()
@@ -121,7 +122,7 @@ func TestReadMultiplePages(t *testing.T) {
 
 	users = append(users, CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 
 	// Act
 	users1, err := p.Read()
@@ -129,7 +130,7 @@ func TestReadMultiplePages(t *testing.T) {
 
 	users = nil
 	users = append(users, CreateTestAPIUser("2", "2", "First2 Last2", "test@unit.com", "0998976834", "connectionId"))
-	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(CreateListResp("nextPage", users), nil)
 	users2, err := p.Read()
 
 	// Assert
@@ -147,7 +148,7 @@ func TestWriteFail(t *testing.T) {
 	p.sendCount = 0
 	user := CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("#boom#"))
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("#boom#"))
 
 	err := p.Write(user)
 
@@ -164,7 +165,7 @@ func TestWrite(t *testing.T) {
 	p.sendCount = 0
 	user := CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 
 	err := p.Write(user)
 
@@ -180,7 +181,7 @@ func TestWriteSplitExt(t *testing.T) {
 	p.sendCount = 0
 	user := CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(2).Return(nil)
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 
 	err := p.Write(user)
 
@@ -196,7 +197,7 @@ func TestWriteSplitExtFail(t *testing.T) {
 	p.sendCount = 0
 	user := CreateTestAPIUser("1", "", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(0).Return(nil)
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Times(0).Return(nil)
 
 	err := p.Write(user)
 
@@ -211,7 +212,7 @@ func TestClose(t *testing.T) {
 	p.lastPage = false
 	p.sendCount = 1
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(&directory.LoadUsersResponse{Received: 1}, nil)
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(&directory.LoadUsersResponse{Received: 1}, nil)
 
 	res, err := p.Close()
 	assert.Nil(err)
@@ -224,7 +225,7 @@ func TestCloseWithStreamClose(t *testing.T) {
 	p.lastPage = false
 	p.sendCount = 0
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(nil, errors.New("#boom#"))
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().CloseAndRecv().Return(nil, errors.New("#boom#"))
 
 	res, err := p.Close()
 	assert.NotNil(err)
@@ -238,7 +239,7 @@ func TestDeleteFail(t *testing.T) {
 	p.lastPage = false
 	p.sendCount = 0
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		nil, errors.New("#boom#"))
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
@@ -252,7 +253,7 @@ func TestDeleteWithInexistingUser(t *testing.T) {
 	p.lastPage = false
 	p.sendCount = 0
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: nil}, nil)
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
@@ -267,9 +268,9 @@ func TestDelete(t *testing.T) {
 	p.sendCount = 0
 	user := CreateTestAPIUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.Nil(err)
@@ -282,9 +283,9 @@ func TestDeleteStreamFail(t *testing.T) {
 	p.sendCount = 0
 	user := CreateTestAPIUser("bd397e35-6333-11ec-b5cf-02a489f227f9", "bd397e35-6333-11ec-b5cf-02a489f227f9", "First Last", "test@unit.com", "0998976834", "connectionId")
 
-	p.dirClient.(*MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().GetUser(p.ctx, gomock.Any()).Return(
 		&directory.GetUserResponse{Result: user}, nil)
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("#boom#"))
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(errors.New("#boom#"))
 
 	err := p.Delete("bd397e35-6333-11ec-b5cf-02a489f227f9")
 	assert.NotNil(err)
@@ -300,8 +301,8 @@ func TestDeleteWithQuery(t *testing.T) {
 
 	users = append(users, CreateTestAPIUser("1", "1", "First Last", "test@unit.com", "0998976834", "connectionId"))
 
-	p.loadUsersStream.(*MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
-	p.dirClient.(*MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
+	p.loadUsersStream.(*mocks.MockDirectory_LoadUsersClient).EXPECT().Send(gomock.Any()).Return(nil)
+	p.dirClient.(*mocks.MockDirectoryClient).EXPECT().ListUsers(p.ctx, gomock.Any()).Return(
 		CreateListResp("", users), nil)
 
 	err := p.Delete("#(metadata.connectionId==\"connectionId\")")

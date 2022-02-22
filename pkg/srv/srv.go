@@ -8,6 +8,7 @@ import (
 
 	aserto "github.com/aserto-dev/aserto-go/client"
 	"github.com/aserto-dev/aserto-go/client/authorizer"
+	"github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/config"
 	api "github.com/aserto-dev/go-grpc/aserto/api/v1"
 	dir "github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
@@ -20,14 +21,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-//go:generate mockgen -destination=mock_directory.go -package=srv github.com/aserto-dev/go-grpc/aserto/authorizer/directory/v1 DirectoryClient,Directory_LoadUsersClient
-
 const (
 	pageSize = int32(100)
 )
 
 type AsertoPlugin struct {
-	Config          *AsertoConfig
+	Config          *config.AsertoConfig
 	dirClient       dir.DirectoryClient
 	ctx             context.Context
 	token           string
@@ -40,42 +39,42 @@ type AsertoPlugin struct {
 
 func NewAuth0Plugin() *AsertoPlugin {
 	return &AsertoPlugin{
-		Config: &AsertoConfig{},
+		Config: &config.AsertoConfig{},
 	}
 }
 
-func (s *AsertoPlugin) GetConfig() plugin.PluginConfig {
-	return &AsertoConfig{}
+func (s *AsertoPlugin) GetConfig() plugin.Config {
+	return &config.AsertoConfig{}
 }
 
 func (s *AsertoPlugin) GetVersion() (string, string, string) {
-	return GetVersion()
+	return config.GetVersion()
 }
 
-func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationType) error {
-	config, ok := cfg.(*AsertoConfig)
+func (s *AsertoPlugin) Open(cfg plugin.Config, operation plugin.OperationType) error {
+	conf, ok := cfg.(*config.AsertoConfig)
 	if !ok {
 		return status.Errorf(codes.InvalidArgument, "invalid config")
 	}
-	s.Config = config
+	s.Config = conf
 
 	s.ctx = context.Background()
 
 	var client *authorizer.Client
 	var err error
-	if config.Insecure {
+	if conf.Insecure {
 		client, err = authorizer.New(
 			s.ctx,
-			aserto.WithAddr(config.Authorizer),
-			aserto.WithTenantID(config.Tenant),
-			aserto.WithInsecure(config.Insecure),
+			aserto.WithAddr(conf.Authorizer),
+			aserto.WithTenantID(conf.Tenant),
+			aserto.WithInsecure(conf.Insecure),
 		)
 	} else {
 		client, err = authorizer.New(
 			s.ctx,
-			aserto.WithAddr(config.Authorizer),
-			aserto.WithAPIKeyAuth(config.APIKey),
-			aserto.WithTenantID(config.Tenant),
+			aserto.WithAddr(conf.Authorizer),
+			aserto.WithAPIKeyAuth(conf.APIKey),
+			aserto.WithTenantID(conf.Tenant),
 		)
 	}
 
@@ -95,7 +94,7 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 
 	s.sendCount = 0
 	s.op = operation
-	s.splitExtensions = config.SplitExtensions
+	s.splitExtensions = conf.SplitExtensions
 
 	return nil
 }

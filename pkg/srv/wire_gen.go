@@ -8,6 +8,7 @@ package srv
 
 import (
 	"context"
+	"github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/mocks"
 	"github.com/aserto-dev/idp-plugin-sdk/plugin"
 	"github.com/golang/mock/gomock"
 )
@@ -21,8 +22,8 @@ func NewAsertoPlugin() *AsertoPlugin {
 
 func NewTestAsertoPlugin(ctrl *gomock.Controller, op plugin.OperationType) *AsertoPlugin {
 	contextContext := context.Background()
-	mockDirectoryClient := NewMockDirectoryClient(ctrl)
-	mockDirectory_LoadUsersClient := NewMockDirectory_LoadUsersClient(ctrl)
+	mockDirectoryClient := mocks.NewMockDirectoryClient(ctrl)
+	mockDirectory_LoadUsersClient := mocks.NewMockDirectory_LoadUsersClient(ctrl)
 	asertoPlugin := &AsertoPlugin{
 		ctx:             contextContext,
 		dirClient:       mockDirectoryClient,
