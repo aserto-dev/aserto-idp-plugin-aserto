@@ -11,7 +11,7 @@ func TestValidateWithEmptyAuthorizer(t *testing.T) {
 	assert := require.New(t)
 	config := AsertoConfig{
 		Authorizer: "",
-		ApiKey:     "APIKey",
+		APIKey:     "APIKey",
 		Tenant:     "tenantID",
 	}
 	err := config.Validate(plugin.OperationTypeRead)
@@ -24,7 +24,7 @@ func TestValidateWithEmptyAPIKey(t *testing.T) {
 	assert := require.New(t)
 	config := AsertoConfig{
 		Authorizer: "Auth",
-		ApiKey:     "",
+		APIKey:     "",
 		Tenant:     "tenantID",
 	}
 
@@ -38,7 +38,7 @@ func TestValidateWithEmptyTenantID(t *testing.T) {
 	assert := require.New(t)
 	config := AsertoConfig{
 		Authorizer: "Auth",
-		ApiKey:     "APIKey",
+		APIKey:     "APIKey",
 		Tenant:     "",
 	}
 
@@ -52,7 +52,7 @@ func TestValidateWithInvalidCredentials(t *testing.T) {
 	assert := require.New(t)
 	config := AsertoConfig{
 		Authorizer: "Auth",
-		ApiKey:     "APIKey",
+		APIKey:     "APIKey",
 		Tenant:     "Tenant",
 	}
 
@@ -66,7 +66,7 @@ func TestDecription(t *testing.T) {
 	assert := require.New(t)
 	config := AsertoConfig{
 		Authorizer: "Auth",
-		ApiKey:     "APIKey",
+		APIKey:     "APIKey",
 		Tenant:     "tenantID",
 	}
 

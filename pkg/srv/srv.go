@@ -74,7 +74,7 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 		client, err = authorizer.New(
 			s.ctx,
 			aserto.WithAddr(config.Authorizer),
-			aserto.WithAPIKeyAuth(config.ApiKey),
+			aserto.WithAPIKeyAuth(config.APIKey),
 			aserto.WithTenantID(config.Tenant),
 		)
 	}
@@ -87,11 +87,9 @@ func (s *AsertoPlugin) Open(cfg plugin.PluginConfig, operation plugin.OperationT
 	s.lastPage = false
 	switch operation {
 	case plugin.OperationTypeWrite, plugin.OperationTypeDelete:
-		{
-			s.loadUsersStream, err = s.dirClient.LoadUsers(s.ctx)
-			if err != nil {
-				return err
-			}
+		s.loadUsersStream, err = s.dirClient.LoadUsers(s.ctx)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -185,11 +183,11 @@ func (s *AsertoPlugin) Write(user *api.User) error {
 	return nil
 }
 
-func (s *AsertoPlugin) Delete(userId string) error {
+func (s *AsertoPlugin) Delete(userID string) error {
 	var deleteUsers []*api.User
-	if isValidUUID(userId) {
+	if isValidUUID(userID) {
 		req := &dir.GetUserRequest{
-			Id: userId,
+			Id: userID,
 		}
 
 		resp, err := s.dirClient.GetUser(s.ctx, req)
@@ -199,7 +197,7 @@ func (s *AsertoPlugin) Delete(userId string) error {
 
 		user := resp.GetResult()
 		if user == nil {
-			return status.Errorf(codes.NotFound, "user %s not found", userId)
+			return status.Errorf(codes.NotFound, "user %s not found", userID)
 		}
 
 		deleteUsers = append(deleteUsers, user)
@@ -214,12 +212,12 @@ func (s *AsertoPlugin) Delete(userId string) error {
 		}
 
 		for _, u := range allUsers {
-			userJson, err := protojson.Marshal(u)
+			userJSON, err := protojson.Marshal(u)
 			if err != nil {
 				return status.Errorf(codes.Internal, "unmarshal user: %s", err.Error())
 			}
-			userStr := string(userJson)
-			result := gjson.Get("["+userStr+"]", userId)
+			userStr := string(userJSON)
+			result := gjson.Get("["+userStr+"]", userID)
 
 			if result.Exists() {
 				deleteUsers = append(deleteUsers, u)
@@ -242,36 +240,27 @@ func (s *AsertoPlugin) Delete(userId string) error {
 		s.sendCount++
 	}
 
-	// req := &dir.DeleteUserRequest{
-	// 	Id: userId,
-	// }
-
-	// if _, err := s.dirClient.DeleteUser(s.ctx, req); err != nil {
-	// 	return errors.Wrapf(err, "delete %s", userId)
-	// }
-
 	return nil
 }
 
 func (s *AsertoPlugin) Close() (*plugin.Stats, error) {
 	switch s.op {
 	case plugin.OperationTypeWrite, plugin.OperationTypeDelete:
-		{
-			res, err := s.loadUsersStream.CloseAndRecv()
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "stream close: %s", err.Error())
-			}
-
-			if res != nil {
-				return &plugin.Stats{
-					Received: res.Received,
-					Created:  res.Created,
-					Updated:  res.Updated,
-					Deleted:  res.Deleted,
-					Errors:   res.Errors,
-				}, nil
-			}
+		res, err := s.loadUsersStream.CloseAndRecv()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "stream close: %s", err.Error())
 		}
+
+		if res != nil {
+			return &plugin.Stats{
+				Received: res.Received,
+				Created:  res.Created,
+				Updated:  res.Updated,
+				Deleted:  res.Deleted,
+				Errors:   res.Errors,
+			}, nil
+		}
+
 	}
 
 	return nil, nil
