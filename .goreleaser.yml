@@ -20,9 +20,9 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/srv.ver={{.Version}}
-      - -X github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/srv.commit={{.ShortCommit}}
-      - -X github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/srv.date={{.Date}}
+      - -X github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/config.ver={{.Version}}
+      - -X github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/config.commit={{.ShortCommit}}
+      - -X github.com/aserto-dev/aserto-idp-plugin-aserto/pkg/config.date={{.Date}}
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
