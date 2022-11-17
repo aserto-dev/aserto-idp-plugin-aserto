@@ -1,3 +1,4 @@
+// nolint: testpackage // current tests rely on internal property access
 package srv
 
 import (
