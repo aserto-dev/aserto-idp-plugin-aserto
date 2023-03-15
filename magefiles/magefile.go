@@ -30,9 +30,9 @@ var (
 	pluginName = "aserto-idp-plugin-aserto"
 	ghName     = "ghcr.io/aserto-dev/aserto-idp-plugins_"
 	osMap      = map[string][]string{
-		"linux":   {"arm64", "amd64"},
-		"darwin":  {"arm64", "amd64"},
-		"windows": {"amd64"},
+		"linux":   {"arm64", "amd64_v1"},
+		"darwin":  {"arm64", "amd64_v1"},
+		"windows": {"amd64_v1"},
 	}
 
 	extensions = map[string]string{
@@ -128,7 +128,7 @@ func Publish() error {
 		for _, arch := range archs {
 			buildPath := filepath.Join(pwd, "dist", pluginName+"_"+operatingSystem+"_"+arch)
 			os.Chdir(buildPath)
-			grName := fmt.Sprintf("%s%s_%s:%s-%s", ghName, operatingSystem, arch, "aserto", version)
+			grName := fmt.Sprintf("%s%s_%s:%s-%s", ghName, operatingSystem, iff(arch == "amd64_v1", "amd64", arch), "aserto", version)
 			location := fmt.Sprintf("%s%s:%s", pluginName, extensions[operatingSystem], mediaType)
 
 			err = oras("push", "-u", username, "-p", password, grName, location)
@@ -139,4 +139,11 @@ func Publish() error {
 	}
 
 	return nil
+}
+
+func iff[T any](cond bool, valTrue, valFalse T) T {
+	if cond {
+		return valTrue
+	}
+	return valFalse
 }

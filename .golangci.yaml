@@ -84,7 +84,7 @@ linters:
     - gocritic
     - gocyclo
     - godot
-    # - goerr113 # temporary disabled
+    # - goerr113 # suppressed till concrete error types are introduced.
     - gofmt
     - goimports
     - goprintffuncname
@@ -95,7 +95,7 @@ linters:
     - misspell
     - nakedret
     - noctx
-    - rowserrcheck
+    # - rowserrcheck https://github.com/golangci/golangci-lint/issues/2649. 
     - staticcheck
     - stylecheck
     - testpackage
@@ -155,5 +155,6 @@ issues:
       - gosec
 
 run:
+  timeout: 5m
   skip-dirs:
   - pkg/testharness/testdata
