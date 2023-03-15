@@ -1,0 +1,7 @@
+logging:
+  log_level: trace
+plugins:
+  aserto:
+    tenant: ef229338-06f3-11ed-9282-00cc3b152496
+    authorizer: authorizer.eng.aserto.com:8443
+    api-key: 63d729a529fff6445bd09375b56d0ed6193df5d9301d095677d712cc2c8dde68

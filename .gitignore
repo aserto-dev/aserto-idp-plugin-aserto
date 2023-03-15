@@ -15,6 +15,7 @@
 # vendor/
 /dist
 /bin
+/.dev
 /.ext
 cover.out
 /aserto-idp-plugin-aserto

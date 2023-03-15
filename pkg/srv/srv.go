@@ -90,6 +90,8 @@ func (s *AsertoPlugin) Open(cfg plugin.Config, operation plugin.OperationType) e
 		if err != nil {
 			return err
 		}
+	case plugin.OperationTypeRead:
+	default:
 	}
 
 	s.sendCount = 0
@@ -259,7 +261,8 @@ func (s *AsertoPlugin) Close() (*plugin.Stats, error) {
 				Errors:   res.Errors,
 			}, nil
 		}
-
+	case plugin.OperationTypeRead:
+	default:
 	}
 
 	return nil, nil
