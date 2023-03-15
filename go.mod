@@ -2,7 +2,7 @@ module github.com/aserto-dev/aserto-idp-plugin-aserto
 
 go 1.19
 
-replace github.com/aserto-dev/idp-plugin-sdk => ../idp-plugin-sdk
+// replace github.com/aserto-dev/idp-plugin-sdk => ../idp-plugin-sdk
 
 require (
 	github.com/aserto-dev/aserto-go v0.8.13
